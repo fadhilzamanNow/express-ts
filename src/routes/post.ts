@@ -4,7 +4,6 @@ import "dotenv/config"
 import { PrismaClient } from "../../generated/prisma";
 import multer from "multer";
 import path from "path";
-import { timeStamp } from "console";
 
 const router = express.Router();
 const prisma = new PrismaClient()
@@ -29,7 +28,7 @@ const verifyToken = (req : Request, res : Response, next : NextFunction) => {
 
 const storage = multer.diskStorage({
     destination: (_, __, cb) => {
-    cb(null, 'uploads/'); 
+    cb(null, 'src/public/images/'); 
     },
     filename: (_, file, cb) => {
     const ext = path.extname(file.originalname);
@@ -252,6 +251,29 @@ router.delete("/:id", verifyToken, async (req : Request, res : Response) => {
                 message : err
             })
         }
+    }
+})
+
+router.get("/userpost", verifyToken, async (req : Request, res : Response) => {
+    try{
+        const findPost = await prisma.post.findMany({
+            where : {
+                //@ts-ignore
+                userId : req.userId
+            }
+        })
+        if(findPost){
+            res.status(200).json({
+                success : true,
+                message : "Data berhasil diperoleh",
+                data : findPost
+            })
+        }
+    }catch(e){
+        res.status(400).json({
+            success : false,
+            message : e
+        })
     }
 })
 

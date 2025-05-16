@@ -343,4 +343,55 @@ router.patch(
   },
 );
 
+router.patch("/editdata", verifyToken, async (req: Request, res: Response) => {
+  try {
+    const { userPassword = null, userPhoneNumber = null } = req.body;
+    console.log(userPhoneNumber)
+    const findUser = await prisma.user.findUnique({
+      where: {
+        //@ts-ignore
+        id: req.userId,
+      },
+    });
+    if (findUser) {
+      const newUser = await prisma.user.update({
+        where: {
+          id: findUser.id,
+        },
+        data: {
+          password:  userPassword ? userPassword : findUser.password,
+          phoneNumber: userPhoneNumber ? userPhoneNumber : findUser.phoneNumber,
+        },
+      });
+
+      if (newUser) {
+        const findProfile = await prisma.profile.findUnique({
+          where: {
+            userId: findUser.id,
+          },
+        });
+        if (findProfile) {
+          res.status(200).json({
+            success: true,
+            message: "Data berhasil diubah",
+            data: {
+              userId: newUser.id,
+              username: newUser.username,
+              email: newUser.email,
+              phoneNumber: newUser.phoneNumber,
+              imageUrl: findProfile.imageUrl,
+            },
+          });
+        }
+      }
+    }
+  } catch (e) {
+    console.log("e : ", e)
+    res.status(400).json({
+      success: false,
+      message: e,
+    });
+  }
+});
+
 export { router as authRouter };
